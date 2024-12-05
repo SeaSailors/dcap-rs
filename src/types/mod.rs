@@ -1,5 +1,5 @@
 use self::quotes::body::*;
-use crate::constants::{ENCLAVE_REPORT_LEN, SGX_TEE_TYPE, TD10_REPORT_LEN, TDX_TEE_TYPE};
+use crate::constants::{ENCLAVE_REPORT_LEN, SGX_QUOTE_BODY_TYPE, SGX_TEE_TYPE, TD10_QUOTE_BODY_TYPE, TD10_REPORT_LEN, TD15_QUOTE_BODY_TYPE, TD15_REPORT_LEN, TDX_TEE_TYPE};
 use alloy_sol_types::SolValue;
 use serde::{Deserialize, Serialize};
 
@@ -38,14 +38,15 @@ impl TcbStatus {
 
 // serialization:
 // [quote_vesion][tee_type][tcb_status][fmspc][quote_body_raw_bytes]
-// 2 bytes + 4 bytes + 1 byte + 6 bytes + var (SGX_ENCLAVE_REPORT = 384; TD10_REPORT = 584)
-// total: 13 + var bytes
+// 2 bytes + 4 bytes + 1 byte + 6 bytes + 2 bytes + var (SGX_ENCLAVE_REPORT = 384; TD10_REPORT = 584; TD15_REPORT = 648)
+// total: 15 + var bytes
 #[derive(Debug)]
 pub struct VerifiedOutput {
     pub quote_version: u16,
     pub tee_type: u32,
     pub tcb_status: TcbStatus,
     pub fmspc: [u8; 6],
+    pub quote_type: u16,
     pub quote_body: QuoteBody,
     pub advisory_ids: Option<Vec<String>>,
 }
@@ -70,9 +71,15 @@ impl VerifiedOutput {
 
         match self.quote_body {
             QuoteBody::SGXQuoteBody(body) => {
+                output_vec.extend_from_slice(&1u16.to_be_bytes());
                 output_vec.extend_from_slice(&body.to_bytes());
             }
             QuoteBody::TD10QuoteBody(body) => {
+                output_vec.extend_from_slice(&2u16.to_be_bytes());
+                output_vec.extend_from_slice(&body.to_bytes());
+            }
+            QuoteBody::TD15QuoteBody(body) => {
+                output_vec.extend_from_slice(&3u16.to_be_bytes());
                 output_vec.extend_from_slice(&body.to_bytes());
             }
         }
@@ -103,18 +110,25 @@ impl VerifiedOutput {
         };
         let mut fmspc = [0; 6];
         fmspc.copy_from_slice(&slice[7..13]);
+        let mut quote_type = [0; 2];
+        quote_type.copy_from_slice(&slice[13..15]);
 
-        let mut offset = 13usize;
-        let quote_body = match u32::from_be_bytes(tee_type) {
-            SGX_TEE_TYPE => {
+        let mut offset = 15usize;
+        let quote_body = match (u32::from_be_bytes(tee_type), u16::from_be_bytes(quote_type)) {
+            (SGX_TEE_TYPE, SGX_QUOTE_BODY_TYPE) => {
                 let raw_quote_body = &slice[offset..offset + ENCLAVE_REPORT_LEN];
                 offset += ENCLAVE_REPORT_LEN;
                 QuoteBody::SGXQuoteBody(EnclaveReport::from_bytes(raw_quote_body))
             }
-            TDX_TEE_TYPE => {
+            (TDX_TEE_TYPE, TD10_QUOTE_BODY_TYPE) => {
                 let raw_quote_body = &slice[offset..offset + TD10_REPORT_LEN];
                 offset += TD10_REPORT_LEN;
                 QuoteBody::TD10QuoteBody(TD10ReportBody::from_bytes(raw_quote_body))
+            }
+            (TDX_TEE_TYPE, TD15_QUOTE_BODY_TYPE) => {
+                let raw_quote_body = &slice[offset..offset + TD15_REPORT_LEN];
+                offset += TD15_REPORT_LEN;
+                QuoteBody::TD15QuoteBody(TD15ReportBody::from_bytes(raw_quote_body))
             }
             _ => panic!("unknown TEE type"),
         };
@@ -130,6 +144,7 @@ impl VerifiedOutput {
             tee_type: u32::from_be_bytes(tee_type),
             tcb_status,
             fmspc,
+            quote_type: u16::from_be_bytes(quote_type),
             quote_body,
             advisory_ids,
         }

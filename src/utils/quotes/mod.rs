@@ -1,5 +1,6 @@
 pub mod version_3;
 pub mod version_4;
+pub mod version_5;
 
 use x509_parser::certificate::X509Certificate;
 
@@ -151,6 +152,7 @@ fn common_verify_and_fetch_tcb(
     match quote_body {
         QuoteBody::SGXQuoteBody(body) => data.extend_from_slice(&body.to_bytes()),
         QuoteBody::TD10QuoteBody(body) => data.extend_from_slice(&body.to_bytes()),
+        QuoteBody::TD15QuoteBody(body) => data.extend_from_slice(&body.to_bytes()),
     };
 
     // prefix pub key

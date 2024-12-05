@@ -3,6 +3,7 @@ use super::cert::Certificates;
 pub mod version_3;
 pub mod version_4;
 pub mod body;
+pub mod version_5;
 
 use body::EnclaveReport;
 

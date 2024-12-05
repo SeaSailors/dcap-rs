@@ -1,6 +1,6 @@
 use crate::constants::SGX_TEE_TYPE;
 use crate::types::quotes::body::QuoteBody;
-use crate::types::quotes::{version_4::QuoteV4, CertDataType};
+use crate::types::quotes::{version_5::QuoteV5, CertDataType};
 use crate::types::TcbStatus;
 use crate::types::{
     tcbinfo::{TcbInfo, TcbInfoV3},
@@ -13,12 +13,12 @@ use crate::utils::tdx_module::{
 
 use super::{check_quote_header, common_verify_and_fetch_tcb, converge_tcb_status_with_qe_tcb};
 
-pub fn verify_quote_dcapv4(
-    quote: &QuoteV4,
+pub fn verify_quote_dcapv5(
+    quote: &QuoteV5,
     collaterals: &IntelCollateral,
     current_time: u64,
 ) -> VerifiedOutput {
-    assert!(check_quote_header(&quote.header, 4), "invalid quote header");
+    assert!(check_quote_header(&quote.header, 5), "invalid quote header");
 
     // we'll now proceed to verify the qe
     let qe_cert_data_v4 = &quote.signature.qe_cert_data;
@@ -29,7 +29,7 @@ pub fn verify_quote_dcapv4(
     {
         qe_report_cert_data
     } else {
-        panic!("Unsupported CertDataType in QuoteSignatureDataV4");
+        panic!("Unsupported CertDataType in QuoteSignatureDataV5");
     };
 
     let (qe_tcb_status, sgx_extensions, tcb_info) = common_verify_and_fetch_tcb(
@@ -107,8 +107,8 @@ pub fn verify_quote_dcapv4(
         tee_type: quote.header.tee_type,
         tcb_status,
         fmspc: sgx_extensions.fmspc,
-        quote_type: 2u16,
+        quote_type: quote.quote_body_type,
         quote_body: quote.quote_body,
-        advisory_ids: advisory_ids
+        advisory_ids,
     }
 }

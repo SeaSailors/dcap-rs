@@ -46,6 +46,7 @@ pub fn verify_quote_dcapv3(
         tee_type: quote.header.tee_type,
         tcb_status,
         fmspc: sgx_extensions.fmspc,
+        quote_type: 1u16,
         quote_body: quote_body,
         advisory_ids: None,
     }
