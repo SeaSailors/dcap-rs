@@ -32,8 +32,15 @@ pub fn verify_quote_dcapv5(
         panic!("Unsupported CertDataType in QuoteSignatureDataV5");
     };
 
+    let quote_body_info =  {
+        let mut info = [0u8; 6];
+        info[..2].copy_from_slice(&quote.quote_body_type.to_le_bytes());
+        info[2..6].copy_from_slice(&quote.quote_body_size.to_le_bytes());
+        info
+    };
     let (qe_tcb_status, sgx_extensions, tcb_info) = common_verify_and_fetch_tcb(
         &quote.header,
+        &quote_body_info,
         &quote.quote_body,
         &quote.signature.quote_signature,
         &quote.signature.ecdsa_attestation_key,

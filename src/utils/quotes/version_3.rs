@@ -15,9 +15,11 @@ pub fn verify_quote_dcapv3(
 ) -> VerifiedOutput {
     assert!(check_quote_header(&quote.header, 3), "invalid quote header");
 
+    let quote_body_info = [0u8; 6];
     let quote_body = QuoteBody::SGXQuoteBody(quote.isv_enclave_report);
     let (qe_tcb_status, sgx_extensions, tcb_info) = common_verify_and_fetch_tcb(
         &quote.header,
+        &quote_body_info,
         &quote_body,
         &quote.signature.isv_enclave_report_signature,
         &quote.signature.ecdsa_attestation_key,

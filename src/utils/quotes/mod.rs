@@ -47,6 +47,7 @@ fn check_quote_header(quote_header: &QuoteHeader, quote_version: u16) -> bool {
 // - TCBInfo (v2 or v3)
 fn common_verify_and_fetch_tcb(
     quote_header: &QuoteHeader,
+    quote_body_info: &[u8; 6],
     quote_body: &QuoteBody,
     ecdsa_attestation_signature: &[u8],
     ecdsa_attestation_pubkey: &[u8],
@@ -149,6 +150,9 @@ fn common_verify_and_fetch_tcb(
     // verify the signature for attestation body
     let mut data = Vec::new();
     data.extend_from_slice(&quote_header.to_bytes());
+    if quote_header.version > 4 {
+        data.extend_from_slice(quote_body_info);
+    }
     match quote_body {
         QuoteBody::SGXQuoteBody(body) => data.extend_from_slice(&body.to_bytes()),
         QuoteBody::TD10QuoteBody(body) => data.extend_from_slice(&body.to_bytes()),
