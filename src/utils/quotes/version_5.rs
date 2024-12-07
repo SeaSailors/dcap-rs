@@ -59,11 +59,10 @@ pub fn verify_quote_dcapv5(
         panic!("TcbInfo must be V3!");
     }
 
-    let (quote_tdx_body, tee_tcb_svn) = if let QuoteBody::TD10QuoteBody(body) = &quote.quote_body {
-        (Some(body), body.tee_tcb_svn)
-    } else {
-        // SGX does not produce tee_tcb_svns
-        (None, [0; 16])
+    let tee_tcb_svn = match quote.quote_body {
+        QuoteBody::TD10QuoteBody(body) => body.tee_tcb_svn,
+        QuoteBody::TD15QuoteBody(body) => body.tee_tcb_svn,
+        _ => [0; 16],
     };
 
     let tee_type = quote.header.tee_type;
@@ -91,10 +90,10 @@ pub fn verify_quote_dcapv5(
         );
 
         // check TDX module
-        let (tdx_report_mrsigner, tdx_report_attributes) = if let Some(tdx_body) = quote_tdx_body {
-            (tdx_body.mrsignerseam, tdx_body.seam_attributes)
-        } else {
-            unreachable!();
+        let (tdx_report_mrsigner, tdx_report_attributes) = match quote.quote_body {
+            QuoteBody::TD10QuoteBody(body) => (body.mrsignerseam, body.seam_attributes),
+            QuoteBody::TD15QuoteBody(body) => (body.mrsignerseam, body.seam_attributes),
+            _ => unreachable!(),
         };
 
         let mr_signer_matched = tdx_module_mrsigner == tdx_report_mrsigner;
