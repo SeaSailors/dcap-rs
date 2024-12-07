@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_quotev5() {
-        let quotev5_slice = include_bytes!("../data/quote_tdx_v5.dat");
+        let quotev5_slice = include_bytes!("../data/quote_tdx_v5_90c06f000000.dat");
         let quotev5 = QuoteV5::from_bytes(quotev5_slice);
         assert_eq!(quotev5.header.version, 5);
     }
@@ -133,7 +133,7 @@ mod tests {
         // let current_time = chrono::Utc::now().timestamp() as u64;
 
         let mut collaterals = IntelCollateral::new();
-        collaterals.set_tcbinfo_bytes(include_bytes!("../data/tcbinfov3_00806f050000.json"));
+        collaterals.set_tcbinfo_bytes(include_bytes!("../data/tcbinfov3_90c06f000000.json"));
         collaterals.set_qeidentity_bytes(include_bytes!("../data/qeidentityv2_apiv4.json"));
         collaterals.set_intel_root_ca_der(include_bytes!(
             "../data/Intel_SGX_Provisioning_Certification_RootCA.cer"
@@ -143,8 +143,8 @@ mod tests {
         collaterals.set_sgx_platform_crl_der(include_bytes!("../data/pck_platform_crl.der"));
         collaterals.set_sgx_processor_crl_der(include_bytes!("../data/pck_processor_crl.der"));
 
-
-        let dcap_quote = QuoteV5::from_bytes(include_bytes!("../data/quote_tdx_v5.dat"));
+        let dcap_quote =
+            QuoteV5::from_bytes(include_bytes!("../data/quote_tdx_v5_90c06f000000.dat"));
 
         let verified_output = verify_quote_dcapv5(&dcap_quote, &collaterals, PINNED_TIME);
 
