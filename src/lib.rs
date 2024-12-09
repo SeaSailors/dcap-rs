@@ -20,6 +20,8 @@ mod tests {
     // Pinned September 10th, 2024, 6:49am GMT
     // there's no need for constant sample collateral updates
     const PINNED_TIME: u64 = 1725950994;
+    // Pinned December 8th, 2024, 9:00pm GMT
+    const V5_PINNED_TIME: u64 = 1733691651;
 
     #[test]
     fn test_root_crl_verify() {
@@ -134,7 +136,7 @@ mod tests {
 
         let mut collaterals = IntelCollateral::new();
         collaterals.set_tcbinfo_bytes(include_bytes!("../data/tcbinfov3_90c06f000000.json"));
-        collaterals.set_qeidentity_bytes(include_bytes!("../data/qeidentityv2_apiv4.json"));
+        collaterals.set_qeidentity_bytes(include_bytes!("../data/qeidentityv2_apiv4_for_quote_v5.json"));
         collaterals.set_intel_root_ca_der(include_bytes!(
             "../data/Intel_SGX_Provisioning_Certification_RootCA.cer"
         ));
@@ -146,7 +148,7 @@ mod tests {
         let dcap_quote =
             QuoteV5::from_bytes(include_bytes!("../data/quote_tdx_v5_90c06f000000.dat"));
 
-        let verified_output = verify_quote_dcapv5(&dcap_quote, &collaterals, PINNED_TIME);
+        let verified_output = verify_quote_dcapv5(&dcap_quote, &collaterals, V5_PINNED_TIME);
 
         println!("{:?}", verified_output);
         let root_hash = hash_x509_keccak256(&collaterals.get_sgx_intel_root_ca());
